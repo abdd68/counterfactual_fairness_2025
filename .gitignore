@@ -8,4 +8,4 @@
 /logs
 /test.bash
 /test.py
-.gitignore
+/.gitignore
