@@ -1,4 +1,4 @@
-# Counterfactual Fairness 2025
+# EXOgenous Causal reasoning (EXOC)
 
 This repository contains the implementation of the paper: **"Towards Counterfactual Fairness through Auxiliary Variables"**, presented at ICLR 2025.
 
