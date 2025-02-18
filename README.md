@@ -33,12 +33,14 @@ To address this, we introduce **EXOgenous Causal reasoning (EXOC)**, a novel cau
 
 2. **Create a virtual environment**:
 
-    ```python3 -m venv env
+    ```bash
+    python3 -m venv env
     source env/bin/activate  # On Windows, use `env\Scripts\activate`
 
 3. **Install the required packages**:
 
-    ```pip install -r requirements.txt
+    ```bash
+    pip install -r requirements.txt
 
 ## Usage
 
