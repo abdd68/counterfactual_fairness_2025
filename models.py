@@ -461,14 +461,6 @@ class CausalModel_crime_up(PyroModule):
         data_X4 = data['PctUnemployed']
         data_X5 = data['PctNotHSGrad']
         data_Y = data['label']
-        # Quick process function (assuming normalization, etc.)
-        # data_race = quickprocess(data_race)
-        # data_X1 = quickprocess(data_X1)
-        # data_X2 = quickprocess(data_X2)
-        # data_X3 = quickprocess(data_X3)
-        # data_X4 = quickprocess(data_X4)
-        # data_X5 = quickprocess(data_X5)
-        # data_Y = quickprocess(data_Y)
 
         # Parameters for the causal model
         dim_race = 1

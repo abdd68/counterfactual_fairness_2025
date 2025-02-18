@@ -1,6 +1,6 @@
 # EXOgenous Causal reasoning (EXOC)
 
-This repository contains the implementation of the paper: **"Towards Counterfactual Fairness through Auxiliary Variables"**, presented at ICLR 2025.
+This repository contains the implementation of the paper: [**"Towards Counterfactual Fairness through Auxiliary Variables"**](https://arxiv.org/abs/2412.04767), presented at ICLR 2025.
 
 ## Overview
 
@@ -60,7 +60,7 @@ Use the `main.py` script to train models and evaluate performance:
 
 After training, results and metrics will be saved in the `results/` directory for analysis.
 
-## Citation
+## Acknowledgement
 
 If you find this work useful, please cite our paper:
 

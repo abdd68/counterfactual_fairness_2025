@@ -282,9 +282,6 @@ def wasserstein(x, y, device, p=0.5, lam=10, its=10, sq=False, backpropT=False, 
     return D, Mlam
 
 def continuous_to_categorical_probs(x):
-    # 假设 x 是已经归一化到 [0, 1] 的连续值
-    # 线性变换，将输入映射到三个 logits 上
-    logits = torch.tensor([1.0, 2.0, 3.0]) * x  # 这里你可以根据需求调整逻辑系数
-    # 通过 softmax 将 logits 转换为概率分布
+    logits = torch.tensor([1.0, 2.0, 3.0]) * x 
     probs = F.softmax(logits, dim=0)
     return probs

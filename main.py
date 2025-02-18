@@ -1,13 +1,9 @@
 import time
 import argparse
 import numpy as np
-import pandas as pd
 import baselines
 import torch
-from torchvision import datasets
-from torch import nn, optim, autograd
-import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from torch import optim
 from models import Causal_model_vae
 from sklearn.metrics import accuracy_score, mean_squared_error, mean_absolute_error, f1_score
 import utils
@@ -92,7 +88,6 @@ def get_cf_pred(model_name, model, data_cf_tst, s_cf):
                      data_cf_tst[si]['Occupation'], data_cf_tst[si]['EducationNum'],
                      data_cf_tst[si]['HoursPerWeek'], data_cf_tst[si]['Race']], dim=1).cpu().detach().numpy()
             elif model_name == 'fairk':
-                #x_fair = data_latent_list.cpu().detach().numpy()  # n x 1
                 if args.synthetic != 0:
                     x_fair = torch.cat([data_cf_tst[si]['Sex'], data_cf_tst[si]['eps_MaritalStatus'],data_cf_tst[si]['eps_EducationNum'],
                                     data_cf_tst[si]['eps_Occupation'],data_cf_tst[si]['eps_HoursPerWeek'],
@@ -103,7 +98,6 @@ def get_cf_pred(model_name, model, data_cf_tst, s_cf):
                                     data_cf_tst[si]['eps_Income_fairk']],dim=1).cpu().detach().numpy()  # n x 1
                 
             elif model_name == 'exoc':
-                #x_fair = data_latent_list.cpu().detach().numpy()  # n x 1
                 if args.synthetic != 0:
                     x_fair = torch.cat([data_cf_tst[si]['Sex'], data_cf_tst[si]['eps_MaritalStatus'],data_cf_tst[si]['eps_EducationNum'],
                                     data_cf_tst[si]['eps_Occupation'],data_cf_tst[si]['eps_HoursPerWeek'],
@@ -160,7 +154,7 @@ def get_cf_pred(model_name, model, data_cf_tst, s_cf):
                     x_fair = data_cf_tst[si]['knowledge_fairk'].view(-1, 1).cpu().detach().numpy()  # n x 1
 
         if model_name != 'constant':
-            if args.dataset == 'adult':  # y_prob
+            if args.dataset == 'adult':
                 y_pred_si = model.predict_proba(x_fair)[:, 1]
             else: # y_hat
                 y_pred_si = model.predict(x_fair)
@@ -188,7 +182,6 @@ def eval_fairness(y_pred_cf_raw, type=1,  p_mmd=0.003, s_wass=0.005):
     return eval_result
 
 def evaluate_model(y_true, y_pred, metrics):
-    # y_true, y_pred: n_sample
     eval_result = {}
     if 'F1-score' in metrics:
         eval_result['F1-score'] = f1_score(y_true, y_pred)

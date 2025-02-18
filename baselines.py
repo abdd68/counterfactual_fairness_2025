@@ -42,7 +42,7 @@ def run_unaware(x, y, train_idx, test_idx, type='linear'):
     if type == 'linear':
         model = LinearRegression()
     else:
-        model = LogisticRegression(class_weight='balanced')
+        model = LogisticRegression(class_weight='balanced', random_state=42)
 
     model.fit(x[train_idx], y[train_idx])  # train
     # test
@@ -94,7 +94,6 @@ def run_cfp_up(data_save, train_idx, test_idx, type='linear', device = 'cpu'):
     model, guide = train_casual_up(model, data_save, train_idx)
     
     data_return = guide()
-    # 获取 'knowledge' 和 'sp' 数据并转换为 numpy 数组
     if args.dataset == 'law':
         x_fair = data_return['knowledge'].view(-1, 1).cpu().detach().numpy()
         data_y = data_save['data']['ZFYA'].cpu().detach().numpy()
@@ -163,12 +162,6 @@ def train_casual(model, data_save, train_idx):
 
 cc = 0
 def train_casual_up(model, data_save, train_idx):
-    def get_train_set(data_save):
-        train_set = {}
-        for key in data_save['data']:
-            train_set[key] = data_save['data'][key][train_idx,:]
-        return train_set
-
     def get_dataset(data_save):
         train_set = {}
         for key in data_save['data']:
@@ -176,21 +169,18 @@ def train_casual_up(model, data_save, train_idx):
         return train_set
     
     def custom_loss(a, b):
-        # 假设你希望 a 和 b 尽可能接近，可以使用 L2 范数作为损失函数
         loss = F.mse_loss(a, b)
         return loss
-    # 定义ELBO损失函数
     def elbo_loss(model, guide, *_args, **kwargs):
         global cc
-        # a, b = pyro.poutine.trace(model).get_trace().nodes["sp"]["value"], pyro.poutine.trace(model).get_trace().nodes["sp"]["value"]
         guide_a, guide_b = pyro.poutine.trace(guide).get_trace(*_args, **kwargs).nodes["sp"]["value"], \
                            pyro.poutine.trace(guide).get_trace(*_args, **kwargs).nodes["spp"]["value"]
                            
 
-        # # ELBO 损失 + 自定义损失
+        # # ELBO loss and custom loss
         elbo_loss = Trace_ELBO().differentiable_loss(model, guide, *_args, **kwargs)
-        # 计算一个动态常数，使得 custom_loss 乘以该常数的结果与 elbo_loss 数量级一致
-        scale_factor = elbo_loss.item() / (10 * custom_loss(guide_a, guide_b).item() + 1e-8)  # 避免除以0
+        # Computes a dynamic constant such that the result of multiplying custom_loss by this constant is the same order of magnitude as elbo_loss
+        scale_factor = elbo_loss.item() / (10 * custom_loss(guide_a, guide_b).item() + 1e-8)  # avoid dividing zero
         customloss = args.gamma * scale_factor * custom_loss(guide_a, guide_b)
         loss = elbo_loss + customloss
 
@@ -211,9 +201,6 @@ def train_casual_up(model, data_save, train_idx):
             loss = svi.step(get_dataset(data_save))  # all data is used here # dict_keys(['LSAT', 'UGPA', 'ZFYA', 'race', 'sex'])
             if j % 10000 == 0:
                 logger.info("[iteration %04d] loss: %.4f" % (j + 1, loss / num_train))
-
-        # for name, value in pyro.get_param_store().items():
-        #     logger.info(name, pyro.param(name))
             
         # save
         save_flag = True
