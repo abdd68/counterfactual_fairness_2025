@@ -42,7 +42,7 @@ def run_unaware(x, y, train_idx, test_idx, type='linear'):
     if type == 'linear':
         model = LinearRegression()
     else:
-        model = LogisticRegression(class_weight='balanced', random_state=42)
+        model = LogisticRegression(class_weight='balanced')
 
     model.fit(x[train_idx], y[train_idx])  # train
     # test
@@ -180,7 +180,7 @@ def train_casual_up(model, data_save, train_idx):
         # # ELBO loss and custom loss
         elbo_loss = Trace_ELBO().differentiable_loss(model, guide, *_args, **kwargs)
         # Computes a dynamic constant such that the result of multiplying custom_loss by this constant is the same order of magnitude as elbo_loss
-        scale_factor = elbo_loss.item() / (10 * custom_loss(guide_a, guide_b).item() + 1e-8)  # avoid dividing zero
+        scale_factor = elbo_loss.item() / (8 * custom_loss(guide_a, guide_b).item() + 1e-8)  # avoid dividing zero
         customloss = args.gamma * scale_factor * custom_loss(guide_a, guide_b)
         loss = elbo_loss + customloss
 

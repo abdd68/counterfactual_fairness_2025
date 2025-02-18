@@ -10,7 +10,7 @@ To address this, we introduce **EXOgenous Causal reasoning (EXOC)**, a novel cau
 
 ## Repository Structure
 
-- `dataset/`: Contains synthetic and real-world datasets used for evaluation.
+- `dataset/`: Contains real-world datasets used for synthetic-generation and evaluation.
 - `baselines.py`: Implementation of baseline models for comparison.
 - `main.py`: Main script to run experiments.
 - `models.py`: Definition of the EXOC framework and other model architectures.
