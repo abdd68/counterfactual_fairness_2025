@@ -30,17 +30,20 @@ To address this, we introduce **EXOgenous Causal reasoning (EXOC)**, a novel cau
    ```bash
    git clone https://github.com/abdd68/counterfactual_fairness_2025.git
    cd counterfactual_fairness_2025
+   ```
 
 2. **Create a virtual environment**:
 
     ```bash
     python3 -m venv env
     source env/bin/activate  # On Windows, use `env\Scripts\activate`
+    ```
 
 3. **Install the required packages**:
 
     ```bash
     pip install -r requirements.txt
+    ```
 
 ## Usage
 
@@ -54,6 +57,7 @@ Use the `main.py` script to train models and evaluate performance:
 
     ```bash
     python main.py --seed 56 -a 1.2 -cuda 2 --dataset law --synthetic 1 -spp 1
+    ```
 
 
 3. **Results**:
