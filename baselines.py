@@ -50,7 +50,7 @@ def run_unaware(x, y, train_idx, test_idx, type='linear'):
 
     return y_pred_tst, model
 
-def run_cfp_u(data_save, train_idx, test_idx, type='linear', device = 'cpu'):
+def run_fairk(data_save, train_idx, test_idx, type='linear', device = 'cpu'):
     if args.dataset == 'law':
         model = CausalModel_law(args, 'fairk_law').to(device)
         data_save = to_tensor(data_save)
@@ -83,7 +83,7 @@ def run_cfp_u(data_save, train_idx, test_idx, type='linear', device = 'cpu'):
         
     return y_pred_test, model_linear, data_return
 
-def run_cfp_up(data_save, train_idx, test_idx, type='linear', device = 'cpu'):
+def run_exoc(data_save, train_idx, test_idx, type='linear', device = 'cpu'):
     if args.dataset == 'law':
         model = CausalModel_law_up(args, 'exoc').to(device)
     elif args.dataset == 'adult':
@@ -180,7 +180,7 @@ def train_casual_up(model, data_save, train_idx):
         # # ELBO loss and custom loss
         elbo_loss = Trace_ELBO().differentiable_loss(model, guide, *_args, **kwargs)
         # Computes a dynamic constant such that the result of multiplying custom_loss by this constant is the same order of magnitude as elbo_loss
-        scale_factor = elbo_loss.item() / (8 * custom_loss(guide_a, guide_b).item() + 1e-8)  # avoid dividing zero
+        scale_factor = elbo_loss.item() / (20 * custom_loss(guide_a, guide_b).item() + 1e-8)  # avoid dividing zero
         customloss = args.gamma * scale_factor * custom_loss(guide_a, guide_b)
         loss = elbo_loss + customloss
 

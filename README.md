@@ -53,7 +53,7 @@ Ensure that the datasets are properly formatted and placed in the `dataset/` dir
 
 Use the `main.py` script to train models and evaluate performance:
 
-    python main.py --seed 56 -a 1.2 -cuda 2 --dataset law --synthetic 1 -spp 1
+    python main.py -a 1.2 -cuda 0 --dataset law --synthetic 1 -spp 1
 
 
 3. **Results**:

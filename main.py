@@ -18,8 +18,8 @@ parser = argparse.ArgumentParser(description='Counterfactual fairness with no ex
 parser.add_argument('-cuda', '--cudanum', type=int, default=1, help='Disables CUDA training.')
 parser.add_argument('--dataset', default='law', help='Dataset name')  # 'law', 'adult'
 parser.add_argument('--synthetic', type=int, default=1, help='Whether to use synthetic dataset')
-parser.add_argument('--seed', type=int, default=1, metavar='S',
-                    help='random seed (default: 1)')
+parser.add_argument('--seed', type=int, default=12, metavar='S',
+                    help='random seed (default: 12)')
 parser.add_argument('-t', '--training', type=int, default=1, help='Whether start training.')
 parser.add_argument('--pyromodel', default='models_save/exoc.pt', help='Dataset models')
 parser.add_argument('--pyroparam', default='models_save/exoc_param.pt', help='Dataset params')
@@ -31,7 +31,7 @@ parser.add_argument('-a', '--gamma', type=float, default=1,
 parser.add_argument('--num_iterations_causalmodel', '-iter', type=int, default=12000, metavar='N',  # synthetic: 10000, law/adult: 12000
                     help='number of epochs to train causal model (default: 10)')
 
-parser.add_argument('--num_iterations_causalmodel_up', '-iterup', type=int, default=12000, metavar='N',  # synthetic: 10000, law/adult: 12000
+parser.add_argument('--num_iterations_causalmodel_up', '-iterup', type=int, default=16000, metavar='N',  # synthetic: 10000, law/adult: 12000
                     help='number of epochs to train causal model (default: 10)')
 parser.add_argument('--epochs_vae', type=int, default=10, metavar='N', help='number of epochs to train (default: 10)')
 
@@ -44,7 +44,7 @@ syn = 'synthetic' if args.synthetic else 'real'
 usespp = 'spp' if args.use_spp else 'yhat'
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,  # 控制台打印的日志级别
-                    filename='logs/' + f"{usespp}_{syn}_{args.dataset}_seed{args.seed}_" + f"iter{args.num_iterations_causalmodel}_" + f"gamma{args.gamma}_" + time.strftime('%m-%d-%H:%M:%S',time.localtime(time.time())) + '.log',
+                    filename='logs/' + f"{usespp}_{syn}_{args.dataset}_seed{args.seed}_" + f"iter{args.num_iterations_causalmodel_up}_" + f"gamma{args.gamma}_" + time.strftime('%m-%d-%H:%M:%S',time.localtime(time.time())) + '.log',
                     filemode='w',  
                     format='%(asctime)s: %(message)s'# 日志格式
                     )
@@ -257,13 +257,13 @@ def train_models(data_save, metrics_set, type='linear'):
     
     clf_fairk, data_return_fairk = -1, -1
     if args.dataset != 'crimes':
-        y_pred_fairk, clf_fairk, data_return_fairk = baselines.run_cfp_u(data_save, train_idx, test_idx, type, device)
+        y_pred_fairk, clf_fairk, data_return_fairk = baselines.run_fairk(data_save, train_idx, test_idx, type, device)
         eval_fairk = evaluate_model(y[test_idx].reshape(-1), y_pred_fairk, metrics_set)
-        logger.info(f"=========== evaluation for cfp_u predictor ================: {eval_fairk}")
+        logger.info(f"=========== evaluation for fairk predictor ================: {eval_fairk}")
         
-    y_pred_exoc, clf_exoc, data_return_exoc = baselines.run_cfp_up(data_save, train_idx, test_idx, type, device)
+    y_pred_exoc, clf_exoc, data_return_exoc = baselines.run_exoc(data_save, train_idx, test_idx, type, device)
     eval_exoc = evaluate_model(y[test_idx].reshape(-1), y_pred_exoc, metrics_set)
-    logger.info(f"=========== evaluation for cfp_up predictor ================: {eval_exoc}")
+    logger.info(f"=========== evaluation for exoc predictor ================: {eval_exoc}")
     return {'clf_full': clf_full, 'clf_unaware': clf_unaware, 'constant_y': y_pred_tst_constant[0], 'clf_fairk':clf_fairk, 'clf_exoc': clf_exoc}, data_return_fairk, data_return_exoc
 
 def get_test_dataset(dataset, y_pred_exoc):
