@@ -1,8 +1,6 @@
 # Counterfactual Fairness 2025
 
-This repository contains the implementation of the paper:
-
-**"Towards Counterfactual Fairness through Auxiliary Variables"**, presented at ICLR 2025.
+This repository contains the implementation of the paper: **"Towards Counterfactual Fairness through Auxiliary Variables"**, presented at ICLR 2025.
 
 ## Overview
 
@@ -59,4 +57,16 @@ Use the `main.py` script to train models and evaluate performance:
 
 
 3. **Results**:
+
 After training, results and metrics will be saved in the `results/` directory for analysis.
+
+## Citation
+
+If you find this work useful, please cite our paper:
+
+@inproceedings{tian2025exoc,
+  title={Towards Counterfactual Fairness through Auxiliary Variables},
+  author={Bowei Tian and Ziyao Wang and Shwai He and Wanghao Ye and Guoheng Sun and Yucong Dai and Yongkai Wu and Ang Li},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2025}
+}
