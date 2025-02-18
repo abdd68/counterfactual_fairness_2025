@@ -52,7 +52,7 @@ def run_unaware(x, y, train_idx, test_idx, type='linear'):
 
 def run_cfp_u(data_save, train_idx, test_idx, type='linear', device = 'cpu'):
     if args.dataset == 'law':
-        model = CausalModel_law(args, 'cfpu_law').to(device)
+        model = CausalModel_law(args, 'fairk_law').to(device)
         data_save = to_tensor(data_save)
         model, guide = train_casual(model, data_save, train_idx)
         data_return = guide()
@@ -61,7 +61,7 @@ def run_cfp_u(data_save, train_idx, test_idx, type='linear', device = 'cpu'):
         x_fair_train, x_fair_test, data_y_train = x_fair[train_idx], x_fair[test_idx], data_y[train_idx]
         
     elif args.dataset == 'adult':
-        model = CausalModel_adult(args, 'cfpu_adult').to(device)
+        model = CausalModel_adult(args, 'fairk_adult').to(device)
         data_save = to_tensor(data_save)
         model, guide = train_casual(model, data_save, train_idx)
         data_return = guide()
@@ -72,15 +72,6 @@ def run_cfp_u(data_save, train_idx, test_idx, type='linear', device = 'cpu'):
         x_fair = np.concatenate([data_save['data']['Sex'].cpu().detach().numpy(), latent_var], axis=1)
         data_y = data_save['data']['Income'].cpu().detach().numpy()
         x_fair_train, x_fair_test, data_y_train = x_fair[train_idx], x_fair[test_idx], data_y[train_idx]
-        
-    # if args.dataset == 'crimes':
-    #     model = CausalModel_crime(args, 'cfpu_crime').to(device)
-    #     data_save = to_tensor(data_save)
-    #     model, guide = train_casual(model, data_save, train_idx)
-    #     data_return = guide()
-    #     x_fair = data_return['knowledge'].view(-1, 1).cpu().detach().numpy()
-    #     data_y = data_save['data']['label'].cpu().detach().numpy()
-    #     x_fair_train, x_fair_test, data_y_train = x_fair[train_idx], x_fair[test_idx], data_y[train_idx]
         
     if args.dataset == 'law':
         model_linear = LinearRegression()
@@ -94,11 +85,11 @@ def run_cfp_u(data_save, train_idx, test_idx, type='linear', device = 'cpu'):
 
 def run_cfp_up(data_save, train_idx, test_idx, type='linear', device = 'cpu'):
     if args.dataset == 'law':
-        model = CausalModel_law_up(args, 'cfpup').to(device)
+        model = CausalModel_law_up(args, 'exoc').to(device)
     elif args.dataset == 'adult':
-        model = CausalModel_adult_up(args, 'cfpup').to(device)
+        model = CausalModel_adult_up(args, 'exoc').to(device)
     elif args.dataset == 'crimes':
-        model = CausalModel_crime_up(args, 'cfpup').to(device)
+        model = CausalModel_crime_up(args, 'exoc').to(device)
     # data_save = to_tensor(data_save)
     model, guide = train_casual_up(model, data_save, train_idx)
     
@@ -153,11 +144,6 @@ def train_casual(model, data_save, train_idx):
         for j in range(args.num_iterations_causalmodel):
             # calculate the loss and take a gradient step
             loss = svi.step(get_dataset(data_save))  # all data is used here # dict_keys(['LSAT', 'UGPA', 'ZFYA', 'race', 'sex'])
-            if j % 1000 == 0:
-                logger.info("[iteration %04d] loss: %.4f" % (j + 1, loss / num_train))
-
-        # for name, value in pyro.get_param_store().items():
-        #     logger.info(name, pyro.param(name))
             
         # save
         save_flag = True
@@ -203,10 +189,13 @@ def train_casual_up(model, data_save, train_idx):
 
         # # ELBO 损失 + 自定义损失
         elbo_loss = Trace_ELBO().differentiable_loss(model, guide, *_args, **kwargs)
-        customloss = args.alpha * custom_loss(guide_a, guide_b) # !!!!!
+        # 计算一个动态常数，使得 custom_loss 乘以该常数的结果与 elbo_loss 数量级一致
+        scale_factor = elbo_loss.item() / (10 * custom_loss(guide_a, guide_b).item() + 1e-8)  # 避免除以0
+        customloss = args.gamma * scale_factor * custom_loss(guide_a, guide_b)
         loss = elbo_loss + customloss
+
         if cc % 1000 == 0:
-            logger.info(f"elbo_loss:{elbo_loss}, custom_loss:{customloss}")
+            logger.info(f"[iteration {cc}] elbo_loss:{elbo_loss:.2f}, custom_loss:{customloss:.2f}")
         cc += 1
         return loss
     

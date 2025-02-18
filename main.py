@@ -25,17 +25,17 @@ parser.add_argument('--synthetic', type=int, default=1, help='Whether to use syn
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
 parser.add_argument('-t', '--training', type=int, default=1, help='Whether start training.')
-parser.add_argument('--pyromodel', default='models_save/cfpup.pt', help='Dataset models')
-parser.add_argument('--pyroparam', default='models_save/cfpup_param.pt', help='Dataset params')
+parser.add_argument('--pyromodel', default='models_save/exoc.pt', help='Dataset models')
+parser.add_argument('--pyroparam', default='models_save/exoc_param.pt', help='Dataset params')
 parser.add_argument('--lrcausalmodel', type=float, default=0.001,
                     help='learning rate for causal mode')
-parser.add_argument('-a', '--alpha', type=float, default=10000,
-                    help='alpha for custom loss')
+parser.add_argument('-a', '--gamma', type=float, default=1,
+                    help='gamma for custom loss')
 
 parser.add_argument('--num_iterations_causalmodel', '-iter', type=int, default=12000, metavar='N',  # synthetic: 10000, law/adult: 12000
                     help='number of epochs to train causal model (default: 10)')
 
-parser.add_argument('--num_iterations_causalmodel_up', '-iterup', type=int, default=24000, metavar='N',  # synthetic: 10000, law/adult: 12000
+parser.add_argument('--num_iterations_causalmodel_up', '-iterup', type=int, default=12000, metavar='N',  # synthetic: 10000, law/adult: 12000
                     help='number of epochs to train causal model (default: 10)')
 parser.add_argument('--epochs_vae', type=int, default=10, metavar='N', help='number of epochs to train (default: 10)')
 
@@ -48,7 +48,7 @@ syn = 'synthetic' if args.synthetic else 'real'
 usespp = 'spp' if args.use_spp else 'yhat'
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,  # 控制台打印的日志级别
-                    filename='logs/' + f"{usespp}_{syn}_{args.dataset}_seed{args.seed}_" + f"iter{args.num_iterations_causalmodel}_" + f"alpha{args.alpha}_" + time.strftime('%m-%d-%H:%M:%S',time.localtime(time.time())) + '.log',
+                    filename='logs/' + f"{usespp}_{syn}_{args.dataset}_seed{args.seed}_" + f"iter{args.num_iterations_causalmodel}_" + f"gamma{args.gamma}_" + time.strftime('%m-%d-%H:%M:%S',time.localtime(time.time())) + '.log',
                     filemode='w',  
                     format='%(asctime)s: %(message)s'# 日志格式
                     )
@@ -75,43 +75,43 @@ def get_cf_pred(model_name, model, data_cf_tst, s_cf):
             elif model_name == 'constant':
                 tst_size = len(data_cf_tst[si]['LSAT'])
                 y_pred_si = np.full((tst_size, 1), model)
-            elif model_name == 'cfpup':
+            elif model_name == 'exoc':
                 if args.synthetic != 0:
                     x_fair = data_cf_tst[si]['knowledge'].view(-1, 1).cpu().detach().numpy()  # n x 1
                 else:
-                    x_fair = data_cf_tst[si]['knowledge_cfpup'].view(-1, 1).cpu().detach().numpy()  # n x 1
-            elif model_name == 'cfpu':
+                    x_fair = data_cf_tst[si]['knowledge_exoc'].view(-1, 1).cpu().detach().numpy()  # n x 1
+            elif model_name == 'fairk':
                 if args.synthetic != 0:
                     x_fair = data_cf_tst[si]['knowledge'].view(-1, 1).cpu().detach().numpy()  # n x 1
                 else:
-                    x_fair = data_cf_tst[si]['knowledge_cfpu'].view(-1, 1).cpu().detach().numpy()  # n x 1
+                    x_fair = data_cf_tst[si]['knowledge_fairk'].view(-1, 1).cpu().detach().numpy()  # n x 1
                 
         elif args.dataset == 'adult':
             if model_name == 'full':
                 x_fair = torch.cat([data_cf_tst[si]['Sex'], data_cf_tst[si]['MaritalStatus'],
                      data_cf_tst[si]['Occupation'], data_cf_tst[si]['EducationNum'],
                      data_cf_tst[si]['HoursPerWeek'], data_cf_tst[si]['Race']], dim=1).cpu().detach().numpy()
-            elif model_name == 'cfpu':
+            elif model_name == 'fairk':
                 #x_fair = data_latent_list.cpu().detach().numpy()  # n x 1
                 if args.synthetic != 0:
                     x_fair = torch.cat([data_cf_tst[si]['Sex'], data_cf_tst[si]['eps_MaritalStatus'],data_cf_tst[si]['eps_EducationNum'],
                                     data_cf_tst[si]['eps_Occupation'],data_cf_tst[si]['eps_HoursPerWeek'],
                                     data_cf_tst[si]['eps_Income']],dim=1).cpu().detach().numpy()  # n x 1
                 else:
-                    x_fair = torch.cat([data_cf_tst[si]['Sex'], data_cf_tst[si]['eps_MaritalStatus_cfpu'],data_cf_tst[si]['eps_EducationNum_cfpu'],
-                                    data_cf_tst[si]['eps_Occupation_cfpu'],data_cf_tst[si]['eps_HoursPerWeek_cfpu'],
-                                    data_cf_tst[si]['eps_Income_cfpu']],dim=1).cpu().detach().numpy()  # n x 1
+                    x_fair = torch.cat([data_cf_tst[si]['Sex'], data_cf_tst[si]['eps_MaritalStatus_fairk'],data_cf_tst[si]['eps_EducationNum_fairk'],
+                                    data_cf_tst[si]['eps_Occupation_fairk'],data_cf_tst[si]['eps_HoursPerWeek_fairk'],
+                                    data_cf_tst[si]['eps_Income_fairk']],dim=1).cpu().detach().numpy()  # n x 1
                 
-            elif model_name == 'cfpup':
+            elif model_name == 'exoc':
                 #x_fair = data_latent_list.cpu().detach().numpy()  # n x 1
                 if args.synthetic != 0:
                     x_fair = torch.cat([data_cf_tst[si]['Sex'], data_cf_tst[si]['eps_MaritalStatus'],data_cf_tst[si]['eps_EducationNum'],
                                     data_cf_tst[si]['eps_Occupation'],data_cf_tst[si]['eps_HoursPerWeek'],
                                     data_cf_tst[si]['eps_Income']],dim=1).cpu().detach().numpy()  # n x 1
                 else:
-                    x_fair = torch.cat([data_cf_tst[si]['Sex'], data_cf_tst[si]['eps_MaritalStatus_cfpup'],data_cf_tst[si]['eps_EducationNum_cfpup'],
-                                    data_cf_tst[si]['eps_Occupation_cfpup'],data_cf_tst[si]['eps_HoursPerWeek_cfpup'],
-                                    data_cf_tst[si]['eps_Income_cfpup']],dim=1).cpu().detach().numpy()  # n x 1
+                    x_fair = torch.cat([data_cf_tst[si]['Sex'], data_cf_tst[si]['eps_MaritalStatus_exoc'],data_cf_tst[si]['eps_EducationNum_exoc'],
+                                    data_cf_tst[si]['eps_Occupation_exoc'],data_cf_tst[si]['eps_HoursPerWeek_exoc'],
+                                    data_cf_tst[si]['eps_Income_exoc']],dim=1).cpu().detach().numpy()  # n x 1
             elif model_name == 'unaware':
                 x_fair = torch.cat([data_cf_tst[si]['Sex'], data_cf_tst[si]['MaritalStatus'],
                                     data_cf_tst[si]['Occupation'], data_cf_tst[si]['EducationNum'],
@@ -144,20 +144,20 @@ def get_cf_pred(model_name, model, data_cf_tst, s_cf):
                 # Predict constant values for testing
                 tst_size = len(data_cf_tst[si]['population'])
                 y_pred_si = np.full((tst_size, 1), model)
-            elif model_name == 'cfpup':
+            elif model_name == 'exoc':
                 if args.synthetic != 0:
                     # Use the learned knowledge variable for predictions
                     x_fair = data_cf_tst[si]['knowledge'].view(-1, 1).cpu().detach().numpy()  # n x 1
                 else:
                     # Use a specialized knowledge representation
-                    x_fair = data_cf_tst[si]['knowledge_cfpup'].view(-1, 1).cpu().detach().numpy()  # n x 1
-            elif model_name == 'cfpu':
+                    x_fair = data_cf_tst[si]['knowledge_exoc'].view(-1, 1).cpu().detach().numpy()  # n x 1
+            elif model_name == 'fairk':
                 if args.synthetic != 0:
                     # Use the learned knowledge variable for predictions
                     x_fair = data_cf_tst[si]['knowledge'].view(-1, 1).cpu().detach().numpy()  # n x 1
                 else:
                     # Use a specialized knowledge representation
-                    x_fair = data_cf_tst[si]['knowledge_cfpu'].view(-1, 1).cpu().detach().numpy()  # n x 1
+                    x_fair = data_cf_tst[si]['knowledge_fairk'].view(-1, 1).cpu().detach().numpy()  # n x 1
 
         if model_name != 'constant':
             if args.dataset == 'adult':  # y_prob
@@ -262,23 +262,23 @@ def train_models(data_save, metrics_set, type='linear'):
     eval_unaware = evaluate_model(y[test_idx].reshape(-1), y_pred_tst_unaware, metrics_set)
     logger.info(f"=========== evaluation for unaware predictor ================: {eval_unaware}")
     
-    clf_cfpu, data_return_cfpu = -1, -1
+    clf_fairk, data_return_fairk = -1, -1
     if args.dataset != 'crimes':
-        y_pred_cfpu, clf_cfpu, data_return_cfpu = baselines.run_cfp_u(data_save, train_idx, test_idx, type, device)
-        eval_cfpu = evaluate_model(y[test_idx].reshape(-1), y_pred_cfpu, metrics_set)
-        logger.info(f"=========== evaluation for cfp_u predictor ================: {eval_cfpu}")
+        y_pred_fairk, clf_fairk, data_return_fairk = baselines.run_cfp_u(data_save, train_idx, test_idx, type, device)
+        eval_fairk = evaluate_model(y[test_idx].reshape(-1), y_pred_fairk, metrics_set)
+        logger.info(f"=========== evaluation for cfp_u predictor ================: {eval_fairk}")
         
-    y_pred_cfpup, clf_cfpup, data_return_cfpup = baselines.run_cfp_up(data_save, train_idx, test_idx, type, device)
-    eval_cfpup = evaluate_model(y[test_idx].reshape(-1), y_pred_cfpup, metrics_set)
-    logger.info(f"=========== evaluation for cfp_up predictor ================: {eval_cfpup}")
-    return {'clf_full': clf_full, 'clf_unaware': clf_unaware, 'constant_y': y_pred_tst_constant[0], 'clf_cfpu':clf_cfpu, 'clf_cfpup': clf_cfpup}, data_return_cfpu, data_return_cfpup
+    y_pred_exoc, clf_exoc, data_return_exoc = baselines.run_cfp_up(data_save, train_idx, test_idx, type, device)
+    eval_exoc = evaluate_model(y[test_idx].reshape(-1), y_pred_exoc, metrics_set)
+    logger.info(f"=========== evaluation for cfp_up predictor ================: {eval_exoc}")
+    return {'clf_full': clf_full, 'clf_unaware': clf_unaware, 'constant_y': y_pred_tst_constant[0], 'clf_fairk':clf_fairk, 'clf_exoc': clf_exoc}, data_return_fairk, data_return_exoc
 
-def get_test_dataset(dataset, y_pred_cfpup):
+def get_test_dataset(dataset, y_pred_exoc):
     dataset_test ={}
     test_index = dataset['index']['tst_idx_list']
     for key, value in dataset['data'].items():
         dataset_test[key] = value[test_index].reshape(-1)
-    dataset_test['y_pred_cfpup'] = torch.from_numpy(y_pred_cfpup).to(device)
+    dataset_test['y_pred_exoc'] = torch.from_numpy(y_pred_exoc).to(device)
     return dataset_test
 
 def norm_mse(pred, true):
@@ -312,7 +312,7 @@ def loss_function_vae(return_result, data, data_s, s_cf):
 
     KL = torch.mean(-0.5 * torch.sum(1 + logvar_h - mu_h.pow(2) - logvar_h.exp(), dim=1), dim=0)
 
-    loss = loss_r + args.alpha * mmd_loss + KL
+    loss = loss_r + args.gamma * mmd_loss + KL
     
 
     eval_result = {'loss': loss, 'loss_r': loss_r, 'loss_mmd': mmd_loss, 'loss_kl': KL}
@@ -466,11 +466,11 @@ def main(path):
         s_feature = [0.0, 1.0, 2.0]
     
     # performance analysis
-    models, latentData_cfpu, latentData_cfpup = train_models(dataset, metrics_set, 'linear')
-    latentData_cfpu = {key + '_cfpu': value.unsqueeze(1) for key, value in latentData_cfpu.items()}
-    latentData_cfpup = {key + '_cfpup': value.unsqueeze(1) for key, value in latentData_cfpup.items()}
+    models, latentData_fairk, latentData_exoc = train_models(dataset, metrics_set, 'linear')
+    latentData_fairk = {key + '_fairk': value.unsqueeze(1) for key, value in latentData_fairk.items()}
+    latentData_exoc = {key + '_exoc': value.unsqueeze(1) for key, value in latentData_exoc.items()}
     model_dict = {'constant': models['constant_y'], 'full': models['clf_full'],
-                      'unaware': models['clf_unaware'], 'cfpu':models['clf_cfpu'], 'cfpup': models['clf_cfpup']}
+                      'unaware': models['clf_unaware'], 'fairk':models['clf_fairk'], 'exoc': models['clf_exoc']}
     # fairness analysis
     # 1. Counterfactual model generation
     
@@ -484,8 +484,8 @@ def main(path):
         data_save_test ={}
         test_index = dataset['index']['tst_idx_list']
         
-        dataset['data'].update(latentData_cfpu)
-        dataset['data'].update(latentData_cfpup)
+        dataset['data'].update(latentData_fairk)
+        dataset['data'].update(latentData_exoc)
         if args.dataset == 'law':
             for key, value in dataset['data'].items():
                 data_save_test[key] = value[test_index]
